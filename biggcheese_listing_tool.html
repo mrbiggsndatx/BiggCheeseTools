@@ -216,7 +216,14 @@ Condition: ${cond}. Title MUST end with: ${cond==='NWT'?'NWT':cond}. NWT = ALL C
     });
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error '+res.status);}
     const d=await res.json();
-    const raw=d.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    let raw=d.content.map(b=>b.text||'').join('').trim();
+    // Strip markdown fences
+    raw=raw.replace(/```json/gi,'').replace(/```/g,'').trim();
+    // Extract just the JSON object if there's extra text
+    const start=raw.indexOf('{');
+    const end=raw.lastIndexOf('}');
+    if(start===-1||end===-1) throw new Error('No JSON found in response');
+    raw=raw.slice(start,end+1);
     listing=JSON.parse(raw);
     meas={};
     renderRes();
